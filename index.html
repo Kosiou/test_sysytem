@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>在线测试系统</title>
+<style>
+/* ========== 基础 ========== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #f0f2f5; color: #333; min-height: 100vh;
+}
+
+/* ========== 导航栏 ========== */
+.navbar {
+  background: linear-gradient(135deg, #4f6ef7, #6c8cff); color: #fff;
+  padding: 0 20px; height: 56px; display: flex; align-items: center;
+  justify-content: space-between; box-shadow: 0 2px 8px rgba(79,110,247,0.25);
+  position: sticky; top: 0; z-index: 100;
+}
+.navbar .title { font-size: 18px; font-weight: 600; }
+.navbar .back-btn {
+  background: rgba(255,255,255,0.2); border: none; color: #fff;
+  padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 14px;
+}
+.navbar .back-btn:hover { background: rgba(255,255,255,0.35); }
+
+/* ========== 容器 ========== */
+.container { max-width: 800px; margin: 0 auto; padding: 24px 16px; }
+
+/* ========== 首页 ========== */
+.home-card {
+  background: #fff; border-radius: 16px; padding: 36px 28px;
+  text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 20px;
+}
+.home-card h1 { font-size: 28px; margin-bottom: 8px; color: #1a1a2e; }
+.home-card .subtitle { color: #888; margin-bottom: 28px; font-size: 15px; }
+.home-buttons { display: flex; flex-direction: column; gap: 14px; max-width: 400px; margin: 0 auto; }
+.home-btn {
+  display: block; padding: 16px 24px; border-radius: 12px; font-size: 17px;
+  font-weight: 600; color: #fff; border: none; cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s; position: relative;
+}
+.home-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+.home-btn:active { transform: translateY(0); }
+.btn-random { background: linear-gradient(135deg, #4f6ef7, #6c8cff); }
+.btn-source { background: linear-gradient(135deg, #67c23a, #85d45a); }
+.btn-wrong  { background: linear-gradient(135deg, #f56c6c, #f78989); }
+.badge {
+  position: absolute; top: -8px; right: -8px;
+  background: #fff; color: #f56c6c; border-radius: 50%;
+  width: 26px; height: 26px; font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* ========== 设置页 ========== */
+.setup-card {
+  background: #fff; border-radius: 16px; padding: 28px 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 20px;
+}
+.setup-card h2 { font-size: 20px; margin-bottom: 20px; color: #1a1a2e; }
+.setup-section { margin-bottom: 20px; }
+.setup-section .label { font-size: 14px; font-weight: 600; color: #666; margin-bottom: 10px; }
+.chip-group { display: flex; gap: 10px; flex-wrap: wrap; }
+.chip {
+  padding: 8px 18px; border: 2px solid #ddd; border-radius: 20px;
+  background: #fff; cursor: pointer; font-size: 14px; transition: all 0.2s; color: #666;
+}
+.chip:hover { border-color: #4f6ef7; color: #4f6ef7; }
+.chip.active { background: #4f6ef7; color: #fff; border-color: #4f6ef7; }
+.chip.disabled { opacity: 0.4; pointer-events: none; }
+.setup-info { font-size: 13px; color: #999; margin-top: 8px; }
+
+/* ========== 题目卡片 ========== */
+.question-card {
+  background: #fff; border-radius: 16px; padding: 24px;
+  margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.question-meta { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.meta-tag {
+  display: inline-block; padding: 3px 10px; border-radius: 12px;
+  font-size: 12px; font-weight: 600;
+}
+.tag-source { background: #e8f0fe; color: #4f6ef7; }
+.tag-type-single { background: #e6f7e6; color: #389e0d; }
+.tag-type-multi  { background: #fff7e6; color: #d48806; }
+
+.question-text { font-size: 16px; line-height: 1.7; margin-bottom: 20px; color: #1a1a2e; }
+
+/* ========== 选项 ========== */
+.option-list { list-style: none; }
+.option-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 16px; margin-bottom: 8px;
+  border: 2px solid #eee; border-radius: 10px;
+  cursor: pointer; transition: all 0.2s; font-size: 15px; line-height: 1.5;
+}
+.option-item:hover { border-color: #c0c8ff; background: #f8f9ff; }
+.option-item.selected { border-color: #4f6ef7; background: #eef1ff; }
+.option-item.correct-answer { border-color: #67c23a; background: #f0f9eb; }
+.option-item.wrong-answer { border-color: #f56c6c; background: #fef0f0; }
+.option-item.disabled { pointer-events: none; opacity: 0.85; }
+.option-marker {
+  width: 22px; height: 22px; border: 2px solid #ccc;
+  border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; margin-top: 1px;
+}
+.option-marker.checkbox { border-radius: 4px; }
+.option-item.selected .option-marker { border-color: #4f6ef7; background: #4f6ef7; color: #fff; }
+.option-item.correct-answer .option-marker { border-color: #67c23a; background: #67c23a; color: #fff; }
+.option-item.wrong-answer .option-marker { border-color: #f56c6c; background: #f56c6c; color: #fff; }
+
+/* ========== 按钮 ========== */
+.btn-row { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+.btn {
+  padding: 12px 28px; border-radius: 10px; font-size: 15px;
+  font-weight: 600; border: none; cursor: pointer; transition: all 0.2s;
+}
+.btn-primary { background: #4f6ef7; color: #fff; }
+.btn-primary:hover { background: #3d5bd9; }
+.btn-success { background: #67c23a; color: #fff; }
+.btn-success:hover { background: #5aad33; }
+.btn-warning { background: #e6a23c; color: #fff; }
+.btn-warning:hover { background: #cf9236; }
+.btn-danger  { background: #f56c6c; color: #fff; }
+.btn-danger:hover { background: #d94f4f; }
+.btn-outline { background: #fff; color: #4f6ef7; border: 2px solid #4f6ef7; }
+.btn-outline:hover { background: #f0f3ff; }
+.btn-lg { padding: 14px 36px; font-size: 17px; border-radius: 12px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ========== 进度条 ========== */
+.progress-bar {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 20px;
+  padding: 12px 16px; background: #fff; border-radius: 10px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04); font-size: 14px; color: #666; flex-wrap: wrap;
+}
+.progress-bar span { font-weight: 600; color: #333; }
+
+/* ========== 成绩总结 ========== */
+.result-card {
+  background: #fff; border-radius: 16px; padding: 36px 28px;
+  text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.result-card .score { font-size: 56px; font-weight: 800; margin: 16px 0; }
+.result-card .score.great { color: #67c23a; }
+.result-card .score.good  { color: #4f6ef7; }
+.result-card .score.fair  { color: #e6a23c; }
+.result-card .score.poor  { color: #f56c6c; }
+.result-card .detail { color: #888; font-size: 15px; margin-bottom: 24px; line-height: 1.8; }
+
+/* ========== 错题本 ========== */
+.wrong-item {
+  background: #fff; border-radius: 12px; padding: 16px 20px;
+  margin-bottom: 12px; box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+  border-left: 4px solid #f56c6c;
+}
+.wrong-item .answer-hidden {
+  filter: blur(6px); user-select: none; pointer-events: none; transition: filter 0.3s;
+}
+.wrong-item .answer-visible { filter: none; user-select: auto; pointer-events: auto; }
+.answer-toggle {
+  background: none; border: 1px dashed #ccc; padding: 4px 12px;
+  border-radius: 6px; font-size: 13px; cursor: pointer; color: #888; margin-top: 8px;
+}
+.answer-toggle:hover { border-color: #4f6ef7; color: #4f6ef7; }
+.consecutive-info { font-size: 13px; color: #e6a23c; margin-top: 8px; }
+.consecutive-info span { font-weight: 700; }
+
+/* ========== 反馈 ========== */
+.feedback {
+  padding: 12px 16px; border-radius: 10px; margin-top: 16px;
+  font-weight: 600; font-size: 15px; display: none;
+}
+.feedback.show { display: block; }
+.feedback.correct { background: #f0f9eb; color: #389e0d; border: 1px solid #b7eb8f; }
+.feedback.wrong { background: #fef0f0; color: #cf1322; border: 1px solid #ffa39e; }
+
+/* ========== 通用 ========== */
+.page-hidden { display: none !important; }
+.empty-state { text-align: center; padding: 60px 20px; color: #aaa; }
+.empty-state .icon { font-size: 56px; margin-bottom: 16px; }
+.empty-state .text { font-size: 16px; }
+
+/* ========== 响应式 ========== */
+@media (max-width: 600px) {
+  .container { padding: 12px 10px; }
+  .question-card, .setup-card, .result-card { padding: 16px; border-radius: 12px; }
+  .btn { padding: 10px 20px; font-size: 14px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 导航栏 ===== -->
+<nav class="navbar">
+  <span class="title" id="navTitle">📝 在线测试系统</span>
+  <button class="back-btn page-hidden" id="backBtn" onclick="goHome()">← 返回首页</button>
+</nav>
+
+<div class="container">
+
+<!-- ===== 首页 ===== -->
+<div id="page-home">
+  <div class="home-card">
+    <h1>📚 题库练习系统</h1>
+    <p class="subtitle">共 <strong id="totalCount">-</strong> 题 | 单选 <strong id="singleCount">-</strong> 题 | 多选 <strong id="multiCount">-</strong> 题</p>
+    <div class="home-buttons">
+      <button class="home-btn btn-random" onclick="showRandomSetup()">🎲 随机刷题</button>
+      <button class="home-btn btn-source" onclick="showSourceSetup()">📖 来源刷题</button>
+      <button class="home-btn btn-wrong" onclick="showWrongBook()" style="position:relative">
+        📋 错题本
+        <span class="badge page-hidden" id="wrongBadge">0</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 随机刷题设置 ===== -->
+<div id="page-random-setup" class="page-hidden">
+  <div class="setup-card">
+    <h2>🎲 随机刷题设置</h2>
+    <div class="setup-section">
+      <div class="label">选择题型</div>
+      <div class="chip-group" id="randomTypeGroup">
+        <button class="chip active" data-val="all" onclick="selectChip('randomType', 'all', this)">全部</button>
+        <button class="chip" data-val="single" onclick="selectChip('randomType', 'single', this)">仅单选题</button>
+        <button class="chip" data-val="multi" onclick="selectChip('randomType', 'multi', this)">仅多选题</button>
+      </div>
+    </div>
+    <div class="setup-section">
+      <div class="label">选择题目数量</div>
+      <div class="chip-group" id="randomCountGroup">
+        <button class="chip" data-val="10" onclick="selectChip('randomCount', '10', this)">10 题</button>
+        <button class="chip active" data-val="20" onclick="selectChip('randomCount', '20', this)">20 题</button>
+        <button class="chip" data-val="50" onclick="selectChip('randomCount', '50', this)">50 题</button>
+        <button class="chip" data-val="all" onclick="selectChip('randomCount', 'all', this)">全部</button>
+      </div>
+      <div class="setup-info" id="randomPoolInfo"></div>
+    </div>
+    <button class="btn btn-primary btn-lg" onclick="startRandomQuiz()" style="width:100%;margin-top:8px">🚀 开始刷题</button>
+  </div>
+</div>
+
+<!-- ===== 来源刷题设置 ===== -->
+<div id="page-source-setup" class="page-hidden">
+  <div class="setup-card">
+    <h2>📖 来源刷题设置</h2>
+    <div class="setup-section">
+      <div class="label">选择来源</div>
+      <div class="chip-group" id="sourceSourceGroup">
+        <button class="chip active" data-val="all" onclick="selectChip('sourceSource', 'all', this)">全部来源</button>
+      </div>
+    </div>
+    <div class="setup-section">
+      <div class="label">筛选题型（可选）</div>
+      <div class="chip-group" id="sourceTypeGroup">
+        <button class="chip active" data-val="all" onclick="selectChip('sourceType', 'all', this)">全部</button>
+        <button class="chip" data-val="single" onclick="selectChip('sourceType', 'single', this)">仅单选题</button>
+        <button class="chip" data-val="multi" onclick="selectChip('sourceType', 'multi', this)">仅多选题</button>
+      </div>
+      <div class="setup-info" id="sourcePoolInfo"></div>
+    </div>
+    <button class="btn btn-success btn-lg" onclick="startSourceQuiz()" style="width:100%;margin-top:8px">🚀 开始刷题</button>
+  </div>
+</div>
+
+<!-- ===== 统一答题器 ===== -->
+<div id="page-quiz" class="page-hidden">
+  <div class="progress-bar" id="quizProgress"></div>
+  <div id="quizContent"></div>
+</div>
+
+<!-- ===== 成绩总结 ===== -->
+<div id="page-result" class="page-hidden">
+  <div class="result-card" id="resultContent"></div>
+</div>
+
+<!-- ===== 错题本 ===== -->
+<div id="page-wrong-book" class="page-hidden">
+  <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+    <button class="btn btn-warning" onclick="startWrongPractice()" id="btnPracticeWrong" disabled>🔁 练习错题</button>
+    <span style="color:#888;font-size:13px;align-self:center">连续答对 2 次自动移出错题本</span>
+  </div>
+  <div id="wrongBookContent"></div>
+</div>
+
+</div><!-- .container -->
+
+<script src="questions.js"></script>
+<script>
+// ==================== 全局数据 ====================
+let allQuestions = [];
+
+// ==================== 答题会话（统一管理所有刷题模式） ====================
+let quizSession = {
+  mode: null,        // 'random' | 'source' | 'wrong'
+  pool: [],          // [qid1, qid2, ...] 题池
+  currentIndex: 0,   // 当前做到第几题（0-based）
+  correctCount: 0,   // 正确题数
+  answered: false,   // 当前题是否已作答
+  selectedIndices: new Set(),  // 当前题用户选中的选项
+  label: ''          // 额外标签（如来源名）
+};
+
+// ==================== 错题本 (sessionStorage) ====================
+function getWrongBook() {
+  try { return JSON.parse(sessionStorage.getItem('wrongBook') || '{}'); }
+  catch(e) { return {}; }
+}
+function saveWrongBook(wb) { sessionStorage.setItem('wrongBook', JSON.stringify(wb)); }
+function addToWrongBook(qid) {
+  const wb = getWrongBook();
+  if (!(qid in wb)) { wb[qid] = 0; saveWrongBook(wb); }
+  updateWrongBadge();
+}
+function incrementConsecutive(qid) {
+  const wb = getWrongBook();
+  if (qid in wb) {
+    wb[qid] = (wb[qid] || 0) + 1;
+    if (wb[qid] >= 2) { delete wb[qid]; }
+    saveWrongBook(wb);
+  }
+  updateWrongBadge();
+}
+function resetConsecutive(qid) {
+  const wb = getWrongBook();
+  if (qid in wb) { wb[qid] = 0; saveWrongBook(wb); }
+  updateWrongBadge();
+}
+function getConsecutiveCount(qid) {
+  const wb = getWrongBook();
+  return (qid in wb) ? (wb[qid] || 0) : null;
+}
+function getWrongBookIds() { return Object.keys(getWrongBook()).map(Number); }
+
+// ==================== 页面导航 ====================
+function showPage(pageId) {
+  document.querySelectorAll('[id^="page-"]').forEach(el => el.classList.add('page-hidden'));
+  const page = document.getElementById(pageId);
+  if (page) page.classList.remove('page-hidden');
+  const backBtn = document.getElementById('backBtn');
+  const navTitle = document.getElementById('navTitle');
+  if (pageId === 'page-home') {
+    backBtn.classList.add('page-hidden');
+    navTitle.textContent = '📝 在线测试系统';
+  } else {
+    backBtn.classList.remove('page-hidden');
+  }
+}
+function goHome() { showPage('page-home'); updateWrongBadge(); }
+
+// ==================== 首页统计 ====================
+function updateHomeStats() {
+  document.getElementById('totalCount').textContent = allQuestions.length;
+  document.getElementById('singleCount').textContent = allQuestions.filter(q => q.type === '单选题').length;
+  document.getElementById('multiCount').textContent = allQuestions.filter(q => q.type === '多选题').length;
+}
+
+// ==================== Chip 选择器（通用） ====================
+let chipSelections = {
+  randomType: 'all',
+  randomCount: '20',
+  sourceSource: 'all',
+  sourceType: 'all'
+};
+function selectChip(group, value, btn) {
+  chipSelections[group] = value;
+  const parent = btn.parentElement;
+  parent.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  // 实时更新可选数量提示
+  if (group === 'randomType' || group === 'randomCount') updateRandomPoolInfo();
+  if (group === 'sourceSource' || group === 'sourceType') updateSourcePoolInfo();
+}
+
+// ==================== 随机刷题设置页 ====================
+function showRandomSetup() {
+  showPage('page-random-setup');
+  document.getElementById('navTitle').textContent = '🎲 随机刷题';
+  // 动态更新题量按钮的可用状态
+  updateRandomPoolInfo();
+}
+
+function getRandomPoolSize() {
+  const type = chipSelections.randomType;
+  if (type === 'single') return allQuestions.filter(q => q.type === '单选题').length;
+  if (type === 'multi')  return allQuestions.filter(q => q.type === '多选题').length;
+  return allQuestions.length;
+}
+
+function updateRandomPoolInfo() {
+  const poolSize = getRandomPoolSize();
+  const countChoice = chipSelections.randomCount;
+  const actual = countChoice === 'all' ? poolSize : Math.min(parseInt(countChoice), poolSize);
+  document.getElementById('randomPoolInfo').textContent =
+    `该题型共 ${poolSize} 题，实际将抽取 ${actual} 题`;
+  // 禁用超出池子大小的题量选项
+  const btns = document.querySelectorAll('#randomCountGroup .chip');
+  btns.forEach(b => {
+    const v = b.getAttribute('data-val');
+    if (v !== 'all' && parseInt(v) > poolSize) b.classList.add('disabled');
+    else b.classList.remove('disabled');
+  });
+}
+
+function startRandomQuiz() {
+  const type = chipSelections.randomType;
+  const countChoice = chipSelections.randomCount;
+
+  // 生成题池
+  let pool = [];
+  if (type === 'single') pool = allQuestions.filter(q => q.type === '单选题');
+  else if (type === 'multi') pool = allQuestions.filter(q => q.type === '多选题');
+  else pool = [...allQuestions];
+
+  // 随机打乱
+  shuffle(pool);
+
+  // 截取数量
+  const count = countChoice === 'all' ? pool.length : Math.min(parseInt(countChoice), pool.length);
+  pool = pool.slice(0, count).map(q => q.id);
+
+  // 设置会话
+  quizSession = {
+    mode: 'random',
+    pool: pool,
+    currentIndex: 0,
+    correctCount: 0,
+    answered: false,
+    selectedIndices: new Set(),
+    label: ''
+  };
+
+  showPage('page-quiz');
+  document.getElementById('navTitle').textContent = '🎲 随机刷题';
+  renderCurrentQuestion();
+}
+
+// ==================== 来源刷题设置页 ====================
+function showSourceSetup() {
+  showPage('page-source-setup');
+  document.getElementById('navTitle').textContent = '📖 来源刷题';
+
+  // 动态生成来源按钮
+  const sources = [...new Set(allQuestions.map(q => q.source))];
+  let html = '<button class="chip active" data-val="all" onclick="selectChip(\'sourceSource\', \'all\', this)">全部来源</button>';
+  sources.forEach(src => {
+    html += `<button class="chip" data-val="${escapeHTML(src)}" onclick="selectChip('sourceSource', '${escapeHTML(src)}', this)">${escapeHTML(src)}</button>`;
+  });
+  document.getElementById('sourceSourceGroup').innerHTML = html;
+  chipSelections.sourceSource = 'all';
+
+  // 重置题型选择
+  document.querySelectorAll('#sourceTypeGroup .chip').forEach(c => c.classList.remove('active'));
+  document.querySelector('#sourceTypeGroup .chip[data-val="all"]').classList.add('active');
+  chipSelections.sourceType = 'all';
+
+  updateSourcePoolInfo();
+}
+
+function getSourcePoolSize() {
+  const src = chipSelections.sourceSource;
+  const type = chipSelections.sourceType;
+  let qs = allQuestions;
+  if (src !== 'all') qs = qs.filter(q => q.source === src);
+  if (type === 'single') qs = qs.filter(q => q.type === '单选题');
+  else if (type === 'multi') qs = qs.filter(q => q.type === '多选题');
+  return qs.length;
+}
+
+function updateSourcePoolInfo() {
+  const size = getSourcePoolSize();
+  document.getElementById('sourcePoolInfo').textContent = `符合条件的题目共 ${size} 题`;
+}
+
+function startSourceQuiz() {
+  const src = chipSelections.sourceSource;
+  const type = chipSelections.sourceType;
+
+  let qs = allQuestions;
+  if (src !== 'all') qs = qs.filter(q => q.source === src);
+  if (type === 'single') qs = qs.filter(q => q.type === '单选题');
+  else if (type === 'multi') qs = qs.filter(q => q.type === '多选题');
+
+  if (qs.length === 0) { alert('没有符合条件的题目'); return; }
+
+  const pool = qs.map(q => q.id);  // 保持原始顺序
+
+  quizSession = {
+    mode: 'source',
+    pool: pool,
+    currentIndex: 0,
+    correctCount: 0,
+    answered: false,
+    selectedIndices: new Set(),
+    label: src === 'all' ? '全部来源' : src
+  };
+
+  showPage('page-quiz');
+  document.getElementById('navTitle').textContent = '📖 来源刷题';
+  renderCurrentQuestion();
+}
+
+// ==================== 统一答题器 ====================
+function renderCurrentQuestion() {
+  const qid = quizSession.pool[quizSession.currentIndex];
+  const q = allQuestions.find(qq => qq.id === qid);
+  if (!q) { nextQuestion(); return; }
+
+  quizSession.answered = false;
+  quizSession.selectedIndices.clear();
+
+  const isSingle = q.type === '单选题';
+  const typeLabel = isSingle ? '🔘 单选题' : '☑️ 多选题';
+  const typeClass = isSingle ? 'tag-type-single' : 'tag-type-multi';
+  const idx = quizSession.currentIndex;
+  const total = quizSession.pool.length;
+
+  // 进度栏
+  let progressHTML = `📊 第 <span>${idx + 1}</span> / <span>${total}</span> 题 | 正确 <span>${quizSession.correctCount}</span> 题`;
+  if (quizSession.mode === 'source' && quizSession.label) {
+    progressHTML += ` | 📄 <span>${escapeHTML(quizSession.label)}</span>`;
+  }
+  if (quizSession.mode === 'wrong') {
+    const cc = getConsecutiveCount(qid);
+    progressHTML += ` | 🔄 连续正确 <span>${cc !== null ? cc : 0}</span> / 2`;
+  }
+  document.getElementById('quizProgress').innerHTML = progressHTML;
+
+  // 题目卡片
+  let optionsHTML = q.options.map((opt, i) => `
+    <li class="option-item" data-index="${i}" onclick="quizSelectOption(this, ${i}, ${isSingle})">
+      <div class="option-marker${isSingle ? '' : ' checkbox'}">${String.fromCharCode(65 + i)}</div>
+      <span>${escapeHTML(opt)}</span>
+    </li>
+  `).join('');
+
+  let sourceMeta = '';
+  if (quizSession.mode !== 'source' || !quizSession.label || quizSession.label === '全部来源') {
+    sourceMeta = `<span class="meta-tag tag-source">📄 来源：${escapeHTML(q.source)}</span>`;
+  }
+
+  const html = `
+    <div class="question-card" id="quizCard">
+      <div class="question-meta">
+        ${sourceMeta}
+        <span class="meta-tag ${typeClass}">${typeLabel}</span>
+      </div>
+      <div class="question-text">${escapeHTML(q.question)}</div>
+      <ul class="option-list">${optionsHTML}</ul>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnSubmit" onclick="quizSubmitAnswer()">提交答案</button>
+        <button class="btn btn-outline" id="btnNext" style="display:none" onclick="nextQuestion()">下一题 ▶</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+  `;
+  document.getElementById('quizContent').innerHTML = html;
+}
+
+function quizSelectOption(el, idx, isSingle) {
+  if (quizSession.answered) return;
+  if (isSingle) {
+    document.querySelectorAll('#quizCard .option-item').forEach(item => item.classList.remove('selected'));
+    quizSession.selectedIndices.clear();
+    quizSession.selectedIndices.add(idx);
+    el.classList.add('selected');
+  } else {
+    if (quizSession.selectedIndices.has(idx)) {
+      quizSession.selectedIndices.delete(idx);
+      el.classList.remove('selected');
+    } else {
+      quizSession.selectedIndices.add(idx);
+      el.classList.add('selected');
+    }
+  }
+}
+
+function quizSubmitAnswer() {
+  if (quizSession.answered) return;
+  if (quizSession.selectedIndices.size === 0) { alert('请至少选择一个选项'); return; }
+
+  quizSession.answered = true;
+  const qid = quizSession.pool[quizSession.currentIndex];
+  const q = allQuestions.find(qq => qq.id === qid);
+  const userAnswer = new Set(quizSession.selectedIndices);
+  const correctAnswer = new Set(q.answer);
+  const isCorrect = setsEqual(userAnswer, correctAnswer);
+
+  if (isCorrect) {
+    quizSession.correctCount++;
+  }
+
+  // 按模式处理错题本
+  if (quizSession.mode === 'wrong') {
+    if (isCorrect) {
+      incrementConsecutive(qid);
+    } else {
+      resetConsecutive(qid);
+    }
+  } else {
+    if (!isCorrect) {
+      addToWrongBook(qid);
+    }
+  }
+
+  // 高亮
+  const items = document.querySelectorAll('#quizCard .option-item');
+  items.forEach((item, i) => {
+    item.classList.add('disabled');
+    if (correctAnswer.has(i)) item.classList.add('correct-answer');
+    if (userAnswer.has(i) && !correctAnswer.has(i)) item.classList.add('wrong-answer');
+  });
+
+  // 反馈
+  const fb = document.getElementById('feedback');
+  fb.classList.add('show');
+  if (isCorrect) {
+    fb.classList.add('correct'); fb.classList.remove('wrong');
+    if (quizSession.mode === 'wrong') {
+      const stillIn = getWrongBookIds().includes(qid);
+      fb.textContent = stillIn ? '✅ 回答正确！还需再对 1 次即可移出错题本。' : '✅ 回答正确！已连续正确 2 次，该题已从错题本移除 🎉';
+    } else {
+      fb.textContent = '✅ 回答正确！';
+    }
+  } else {
+    fb.classList.add('wrong'); fb.classList.remove('correct');
+    fb.textContent = '❌ 回答错误！正确答案已用绿色标出。' + (quizSession.mode !== 'wrong' ? ' 该题已加入错题本。' : ' 连续正确次数已重置。');
+  }
+
+  document.getElementById('btnSubmit').style.display = 'none';
+  document.getElementById('btnNext').style.display = '';
+}
+
+function nextQuestion() {
+  quizSession.currentIndex++;
+  if (quizSession.currentIndex >= quizSession.pool.length) {
+    // 题池耗尽 → 显示结果
+    showResult();
+    return;
+  }
+  renderCurrentQuestion();
+}
+
+// ==================== 成绩总结 ====================
+function showResult() {
+  showPage('page-result');
+  document.getElementById('navTitle').textContent = '📊 成绩总结';
+
+  const total = quizSession.pool.length;
+  const correct = quizSession.correctCount;
+  const rate = total > 0 ? Math.round(correct / total * 100) : 0;
+
+  let gradeClass, gradeEmoji;
+  if (rate >= 90)      { gradeClass = 'great'; gradeEmoji = '🏆'; }
+  else if (rate >= 70) { gradeClass = 'good';  gradeEmoji = '👍'; }
+  else if (rate >= 50) { gradeClass = 'fair';  gradeEmoji = '📚'; }
+  else                 { gradeClass = 'poor';  gradeEmoji = '💪'; }
+
+  let restartFn, restartLabel;
+  if (quizSession.mode === 'random') {
+    restartFn = 'showRandomSetup()';
+    restartLabel = '🔄 再来一组随机题';
+  } else if (quizSession.mode === 'source') {
+    restartFn = 'showSourceSetup()';
+    restartLabel = '🔄 换一个来源刷题';
+  } else {
+    restartFn = 'startWrongPractice()';
+    restartLabel = '🔁 继续练习错题';
+  }
+
+  const wrongCount = total - correct;
+  let wrongHint = '';
+  if (wrongCount > 0 && quizSession.mode !== 'wrong') {
+    wrongHint = `<p style="color:#f56c6c;margin-top:8px">📋 ${wrongCount} 道错题已自动加入错题本</p>`;
+  }
+
+  document.getElementById('resultContent').innerHTML = `
+    <h2>${gradeEmoji} 练习完成！</h2>
+    <div class="score ${gradeClass}">${rate}%</div>
+    <div class="detail">
+      总题数：<strong>${total}</strong> 题<br>
+      正确：<strong style="color:#67c23a">${correct}</strong> 题 &nbsp;|&nbsp;
+      错误：<strong style="color:#f56c6c">${wrongCount}</strong> 题
+      ${wrongHint}
+    </div>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn btn-primary" onclick="${restartFn}">${restartLabel}</button>
+      <button class="btn btn-outline" onclick="goHome()">🏠 返回首页</button>
+    </div>
+  `;
+
+  updateWrongBadge();
+}
+
+// ==================== 错题练习 ====================
+function startWrongPractice() {
+  const ids = getWrongBookIds();
+  if (ids.length === 0) { alert('没有错题可练习'); return; }
+
+  // 随机打乱错题
+  const pool = [...ids];
+  shuffle(pool);
+
+  quizSession = {
+    mode: 'wrong',
+    pool: pool,
+    currentIndex: 0,
+    correctCount: 0,
+    answered: false,
+    selectedIndices: new Set(),
+    label: ''
+  };
+
+  showPage('page-quiz');
+  document.getElementById('navTitle').textContent = '🔁 错题练习';
+  renderCurrentQuestion();
+}
+
+// ==================== 错题本页面 ====================
+function showWrongBook() {
+  showPage('page-wrong-book');
+  document.getElementById('navTitle').textContent = '📋 错题本';
+  renderWrongBook();
+}
+
+function renderWrongBook() {
+  const wb = getWrongBook();
+  const ids = Object.keys(wb).map(Number);
+  const container = document.getElementById('wrongBookContent');
+  const btn = document.getElementById('btnPracticeWrong');
+
+  if (ids.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">🎉</div><div class="text">暂无错题，太棒了！</div></div>';
+    btn.disabled = true;
+    return;
+  }
+
+  btn.disabled = false;
+  let html = '';
+  ids.forEach(qid => {
+    const q = allQuestions.find(qq => qq.id === qid);
+    if (!q) return;
+    const cc = wb[qid] || 0;
+    const isSingle = q.type === '单选题';
+    const typeLabel = isSingle ? '🔘 单选题' : '☑️ 多选题';
+    const typeClass = isSingle ? 'tag-type-single' : 'tag-type-multi';
+    const correctLabels = q.answer.map(i => String.fromCharCode(65 + i)).join('、');
+
+    html += `
+      <div class="wrong-item">
+        <div class="question-meta">
+          <span class="meta-tag tag-source">📄 ${escapeHTML(q.source)}</span>
+          <span class="meta-tag ${typeClass}">${typeLabel}</span>
+        </div>
+        <div class="question-text" style="font-size:14px">${escapeHTML(q.question)}</div>
+        <ul style="list-style:none;margin-top:8px">
+          ${q.options.map((opt, i) =>
+            `<li style="padding:4px 0;font-size:14px;color:#555">${String.fromCharCode(65 + i)}. ${escapeHTML(opt)}</li>`
+          ).join('')}
+        </ul>
+        <div class="consecutive-info">📊 连续正确次数：<span>${cc}</span> / 2</div>
+        <div style="margin-top:6px">
+          <span style="font-size:13px;color:#999">正确答案：</span>
+          <span class="answer-hidden" id="answerSpan${qid}" style="font-weight:600;color:#67c23a">
+            ${correctLabels}. ${q.answer.map(i => escapeHTML(q.options[i])).join('；')}
+          </span>
+        </div>
+        <button class="answer-toggle" id="toggleBtn${qid}" onclick="toggleAnswer(${qid})">👁 查看答案</button>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+}
+
+function toggleAnswer(qid) {
+  const span = document.getElementById('answerSpan' + qid);
+  const btn = document.getElementById('toggleBtn' + qid);
+  if (span.classList.contains('answer-hidden')) {
+    span.classList.remove('answer-hidden');
+    span.classList.add('answer-visible');
+    btn.textContent = '🙈 隐藏答案';
+  } else {
+    span.classList.add('answer-hidden');
+    span.classList.remove('answer-visible');
+    btn.textContent = '👁 查看答案';
+  }
+}
+
+// ==================== 工具函数 ====================
+function setsEqual(a, b) {
+  if (a.size !== b.size) return false;
+  for (let x of a) { if (!b.has(x)) return false; }
+  return true;
+}
+
+function escapeHTML(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function updateWrongBadge() {
+  const badge = document.getElementById('wrongBadge');
+  const count = getWrongBookIds().length;
+  if (count > 0) {
+    badge.textContent = count;
+    badge.classList.remove('page-hidden');
+  } else {
+    badge.classList.add('page-hidden');
+  }
+}
+
+// ==================== 初始化 ====================
+function init() {
+  if (typeof window.ALL_QUESTIONS === 'undefined') {
+    document.getElementById('page-home').innerHTML = `
+      <div class="home-card">
+        <h1>⚠️ 题库加载失败</h1>
+        <p style="color:#f56c6c;margin:16px 0">找不到 questions.js 文件</p>
+        <p style="color:#888">请先运行：python3 scripts/convert.py</p>
+      </div>`;
+    return;
+  }
+  allQuestions = window.ALL_QUESTIONS;
+  updateHomeStats();
+  updateWrongBadge();
+  showPage('page-home');
+}
+
+init();
+</script>
+</body>
+</html>
